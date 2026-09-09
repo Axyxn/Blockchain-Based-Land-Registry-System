@@ -3,51 +3,107 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 226 100% 97%; /* Light blueish/grey background #F4F7FE */
+    --foreground: 222 47% 11%; /* Dark text */
+
+    --card: 0 0% 100%; /* Pure white */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%; /* Bright Blue #1C64F2 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 214 32% 91%; /* Light grey/blue for secondary buttons */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 91%; /* Muted backgrounds */
+    --muted-foreground: 215 16% 47%; /* Muted text */
+
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --success: 142 71% 45%; /* Green for verified */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%; /* Yellow/Orange for pending */
+    --warning-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 1rem; /* Rounded soft corners for cards */
+  }
+
+  /* Force light mode for now to ensure the clean look */
+  .dark {
+    --background: 226 100% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   }
-
   h1, h2, h3, h4, .font-heading {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; /* Clean sans-serif everywhere */
   }
 }
 
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Clean Card Shadows */
+.clean-card {
+  @apply bg-card rounded-2xl border-none;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.clean-card-hover {
+  @apply transition-all duration-300;
 }
-
-.glass-card:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(34, 197, 94, 0.3);
-  box-shadow: 0 10px 30px -10px rgba(34, 197, 94, 0.15);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 25px rgba(34, 197, 94, 0.25);
+.clean-card-hover:hover {
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b0f17;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: hsl(var(--muted-foreground) / 0.5);
 }

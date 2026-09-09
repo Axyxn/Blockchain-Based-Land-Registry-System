@@ -178,22 +178,21 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="space-y-8 pb-10">
       
       {/* Top Banner / Hero Header */}
-      <div className="relative rounded-3xl overflow-hidden glass-panel p-8 sm:p-10 border border-slate-800">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+      <div className="relative clean-card p-8 sm:p-10 border border-border">
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4" />
-              On-Chain Title Registry & Escrow
+              On-Chain Title Registry
             </div>
-            <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            <h1 className="font-heading text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
               Blockchain Land Title Management
             </h1>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Verify land deeds, prevent fraudulent title duplicates, and execute escrow-protected property transfers on an immutable ledger.
             </p>
           </div>
@@ -201,7 +200,7 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all"
+              className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all"
             >
               <PlusCircle className="w-4 h-4" />
               Register New Land
@@ -210,27 +209,27 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Analytics Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800/80">
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Total Parcels</span>
-            <span className="font-heading text-2xl font-bold text-white mt-1 block">{records.length}</span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-border">
+          <div className="bg-background/50 p-4 rounded-xl border border-border">
+            <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Total Parcels</span>
+            <span className="font-heading text-2xl font-extrabold text-foreground mt-1 block">{records.length}</span>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Govt Verified</span>
-            <span className="font-heading text-2xl font-bold text-emerald-400 mt-1 block">
+          <div className="bg-background/50 p-4 rounded-xl border border-border">
+            <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Govt Verified</span>
+            <span className="font-heading text-2xl font-extrabold text-success mt-1 block">
               {records.filter(r => r.status === 'verified' || r.status === 'listed_for_sale').length}
             </span>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Pending Queue</span>
-            <span className="font-heading text-2xl font-bold text-amber-400 mt-1 block">
+          <div className="bg-background/50 p-4 rounded-xl border border-border">
+            <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Pending Queue</span>
+            <span className="font-heading text-2xl font-extrabold text-warning mt-1 block">
               {records.filter(r => r.status === 'pending_verification').length}
             </span>
           </div>
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Marketplace Valuation</span>
-            <span className="font-heading text-2xl font-bold text-cyan-400 mt-1 block">
-              {records.reduce((acc, r) => acc + r.price_eth, 0).toFixed(1)} ETH
+          <div className="bg-background/50 p-4 rounded-xl border border-border">
+            <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Marketplace Valuation</span>
+            <span className="font-heading text-2xl font-extrabold text-primary mt-1 block">
+              ${(records.reduce((acc, r) => acc + r.price_eth, 0) * 3123).toLocaleString()} <span className="text-sm font-medium text-muted-foreground">({records.reduce((acc, r) => acc + r.price_eth, 0).toFixed(1)} ETH)</span>
             </span>
           </div>
         </div>
@@ -238,68 +237,69 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Role View Header & Search Filter */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
         <div>
-          <h2 className="font-heading text-xl font-bold text-white capitalize flex items-center gap-2">
-            {role === 'registrar' && <Building2 className="w-5 h-5 text-amber-400" />}
-            {role === 'owner' && <Layers className="w-5 h-5 text-emerald-400" />}
-            {role === 'buyer' && <TrendingUp className="w-5 h-5 text-cyan-400" />}
+          <h2 className="font-heading text-xl font-bold text-foreground capitalize flex items-center gap-2">
+            {role === 'registrar' && <Building2 className="w-5 h-5 text-warning" />}
+            {role === 'owner' && <Layers className="w-5 h-5 text-success" />}
+            {role === 'buyer' && <TrendingUp className="w-5 h-5 text-primary" />}
             {role === 'registrar' && 'Govt Registrar Inspection Queue'}
             {role === 'owner' && 'My Property Portfolio'}
             {role === 'buyer' && 'Public Verified Land Marketplace'}
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-1">
             {role === 'registrar' && 'Review legal deed proofs and issue on-chain title verifications'}
             {role === 'owner' && 'Manage your registered parcels and toggle marketplace listings'}
             {role === 'buyer' && 'Explore verified land titles and initiate escrow purchase transfers'}
           </p>
         </div>
 
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
           <input
             type="text"
             placeholder="Search parcel, ID, location..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-card border border-border rounded-xl pl-9 pr-4 py-3 text-sm text-foreground shadow-sm placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all"
           />
         </div>
       </div>
 
       {/* Parcels Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredRecords().length > 0 ? (
           filteredRecords().map(record => (
-            <LandCard
-              key={record.id}
-              record={record}
-              actionText={
-                role === 'registrar' && record.status === 'pending_verification'
-                  ? 'Verify Deed'
-                  : role === 'owner' && record.status === 'verified'
-                  ? 'List for Sale'
-                  : role === 'buyer' && record.status === 'listed_for_sale'
-                  ? 'Buy with Escrow'
-                  : undefined
-              }
-              onActionClick={
-                role === 'registrar'
-                  ? handleRegistrarVerify
-                  : role === 'owner'
-                  ? handleOwnerList
-                  : role === 'buyer'
-                  ? handleBuyerBuy
-                  : undefined
-              }
-            />
+            <div key={record.id} className="clean-card clean-card-hover border border-border flex flex-col overflow-hidden">
+              <LandCard
+                record={record}
+                actionText={
+                  role === 'registrar' && record.status === 'pending_verification'
+                    ? 'Verify Deed'
+                    : role === 'owner' && record.status === 'verified'
+                    ? 'List for Sale'
+                    : role === 'buyer' && record.status === 'listed_for_sale'
+                    ? 'Buy with Escrow'
+                    : undefined
+                }
+                onActionClick={
+                  role === 'registrar'
+                    ? handleRegistrarVerify
+                    : role === 'owner'
+                    ? handleOwnerList
+                    : role === 'buyer'
+                    ? handleBuyerBuy
+                    : undefined
+                }
+              />
+            </div>
           ))
         ) : (
-          <div className="col-span-full py-16 text-center glass-panel rounded-3xl border border-slate-800">
-            <AlertCircle className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="font-heading text-lg font-bold text-slate-300">No Parcels Found in Current View</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Try switching your role view from the navbar menu or register a new parcel.
+          <div className="col-span-full py-20 text-center clean-card border border-border border-dashed">
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <h3 className="font-heading text-lg font-bold text-foreground">No Parcels Found in Current View</h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+              Try switching your role view from the sidebar menu or register a new parcel.
             </p>
           </div>
         )}
