@@ -74,10 +74,13 @@ export const PublicLedger: React.FC = () => {
             className="bg-background border border-border text-sm font-medium text-foreground rounded-xl px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all shadow-sm"
           >
             <option value="">All States</option>
-            <option value="California">California</option>
-            <option value="New York">New York</option>
-            <option value="Texas">Texas</option>
-            <option value="Florida">Florida</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Telangana">Telangana</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Uttar Pradesh">Uttar Pradesh</option>
           </select>
 
           <select

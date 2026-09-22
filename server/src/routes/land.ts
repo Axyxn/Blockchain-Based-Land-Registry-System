@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { supabase } from '../config/supabase';
 import { readOnlyContract } from '../config/blockchain';
 import { ethers } from 'ethers';
+import { requireAuth, requireRole } from '../middleware/auth';
 
 const router = Router();
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
@@ -13,7 +14,7 @@ const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
  * Accepts deed document file + land metadata.
  * Calculates SHA-256 hash, uploads to Supabase storage 'land-documents', saves off-chain DB record.
  */
-router.post('/register', upload.single('deedDocument'), async (req: Request, res: Response) => {
+router.post('/register', requireAuth, upload.single('deedDocument'), async (req: Request, res: Response) => {
   try {
     const {
       cadastralId,
@@ -162,53 +163,68 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Check if ID is UUID or onchain_id
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
+    const isNumeric = !isNaN(Number(id));
+
     let dbQuery = supabase.from('land_records').select('*');
-    if (id.includes('-')) {
+    if (isUuid) {
       dbQuery = dbQuery.eq('id', id);
+    } else if (isNumeric) {
+      dbQuery = dbQuery.or(`onchain_id.eq.${parseInt(id)},cadastral_id.eq.${id}`);
     } else {
-      dbQuery = dbQuery.eq('onchain_id', parseInt(id));
+      dbQuery = dbQuery.eq('cadastral_id', id);
     }
 
-    const { data: record, error: dbError } = await dbQuery.single();
+    const { data: records } = await dbQuery;
+    const record = records && records.length > 0 ? records[0] : null;
 
-    if (dbError || !record) {
-      return res.status(404).json({ error: 'Land record not found' });
-    }
-
-    // Fetch on-chain state if onchain_id exists
+    // Fetch on-chain state if onchain_id exists or if query is numeric
     let onChainData = null;
-    if (record.onchain_id && readOnlyContract) {
+    const targetOnchainId = record?.onchain_id || (isNumeric ? parseInt(id) : null);
+
+    if (targetOnchainId && readOnlyContract) {
       try {
-        const parcel = await readOnlyContract.getLandParcel(record.onchain_id);
-        onChainData = {
-          id: parcel.id.toString(),
-          cadastralId: parcel.cadastralId,
-          location: parcel.location,
-          areaInSqFt: parcel.areaInSqFt.toString(),
-          priceWei: parcel.price.toString(),
-          priceEth: ethers.formatEther(parcel.price),
-          currentOwner: parcel.currentOwner,
-          isVerified: parcel.isVerified,
-          isForSale: parcel.isForSale,
-          documentHash: parcel.documentHash
-        };
+        const parcel = await readOnlyContract.getLandParcel(targetOnchainId);
+        if (parcel && parcel.id && parcel.id.toString() !== '0') {
+          onChainData = {
+            id: parcel.id.toString(),
+            cadastralId: parcel.cadastralId,
+            location: parcel.location,
+            areaInSqFt: parcel.areaInSqFt.toString(),
+            priceWei: parcel.price.toString(),
+            priceEth: ethers.formatEther(parcel.price),
+            currentOwner: parcel.currentOwner,
+            isVerified: parcel.isVerified,
+            isForSale: parcel.isForSale,
+            documentHash: parcel.documentHash
+          };
+        }
       } catch (rpcErr) {
-        console.warn(`[RPC Warning] Could not fetch on-chain state for parcel #${record.onchain_id}:`, rpcErr);
+        // Parcel on-chain fetch failed or revert
       }
     }
 
     // Fetch activity logs provenance
-    const { data: activityLogs } = await supabase
-      .from('activity_logs')
-      .select('*')
-      .or(`land_record_id.eq.${record.id},onchain_parcel_id.eq.${record.onchain_id || 0}`)
-      .order('created_at', { ascending: true });
+    let activityLogs: any[] = [];
+    if (record || targetOnchainId) {
+      const orConditions = [];
+      if (record?.id) orConditions.push(`land_record_id.eq.${record.id}`);
+      if (targetOnchainId) orConditions.push(`onchain_parcel_id.eq.${targetOnchainId}`);
+
+      if (orConditions.length > 0) {
+        const { data: logs } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .or(orConditions.join(','))
+          .order('created_at', { ascending: true });
+        if (logs) activityLogs = logs;
+      }
+    }
 
     return res.json({
       offChainRecord: record,
       onChainData,
-      provenanceTrail: activityLogs || []
+      provenanceTrail: activityLogs
     });
   } catch (error: any) {
     return res.status(500).json({ error: 'Server error', details: error.message });
@@ -219,7 +235,7 @@ router.get('/:id', async (req: Request, res: Response) => {
  * POST /api/land/verify
  * Sync registrar approval status manually or trigger backend verification confirmation
  */
-router.post('/verify', async (req: Request, res: Response) => {
+router.post('/verify', requireAuth, requireRole(['registrar']), async (req: Request, res: Response) => {
   try {
     const { onchainId, cadastralId, registrarAddress, txHash } = req.body;
 
@@ -258,7 +274,7 @@ router.post('/verify', async (req: Request, res: Response) => {
  * POST /api/webhooks/blockchain-sync
  * Trigger sync of all on-chain parcels into Supabase
  */
-router.post('/webhooks/blockchain-sync', async (req: Request, res: Response) => {
+router.post('/webhooks/blockchain-sync', requireAuth, requireRole(['registrar']), async (req: Request, res: Response) => {
   try {
     const totalParcelsCount = await readOnlyContract.totalParcelsCount();
     const count = Number(totalParcelsCount);

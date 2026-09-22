@@ -21,3 +21,4 @@ cache/
 .idea/
 .DS_Store
 *.log
+implementation_plan.md

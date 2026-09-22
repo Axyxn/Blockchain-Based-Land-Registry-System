@@ -1,16 +1,17 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Web3Provider } from './context/Web3Context';
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './pages/Dashboard';
 import { PublicLedger } from './pages/PublicLedger';
 import { ParcelDetail } from './pages/ParcelDetail';
 import { ProvenanceExplorer } from './pages/ProvenanceExplorer';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 export const App: React.FC = () => {
   return (
     <Web3Provider>
-      <Router>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
           
           {/* Sidebar */}
@@ -22,7 +23,8 @@ export const App: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             <main className="p-8 max-w-[1600px] mx-auto">
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/public-ledger" element={<PublicLedger />} />
                 <Route path="/parcel/:id" element={<ParcelDetail />} />
                 <Route path="/provenance" element={<ProvenanceExplorer />} />

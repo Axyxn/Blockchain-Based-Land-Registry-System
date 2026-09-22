@@ -2,8 +2,10 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import notificationRoutes from './routes/notifications';
 import landRoutes from './routes/land';
 import userRoutes from './routes/user';
+import authRoutes from './routes/auth';
 import { startBlockchainSyncListener } from './services/blockchainSync';
 
 dotenv.config();
@@ -11,11 +13,35 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
 
+// Simple rate limiter middleware
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 min
+const MAX_REQUESTS_PER_WINDOW = 100;
+
+const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const userRecord = requestCounts.get(ip);
+
+  if (!userRecord || now > userRecord.resetTime) {
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+
+  if (userRecord.count >= MAX_REQUESTS_PER_WINDOW) {
+    return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+  }
+
+  userRecord.count++;
+  return next();
+};
+
 // Security & Middleware Configuration
 app.use(helmet());
+app.use(rateLimiter);
 app.use(cors({
   origin: '*', // Allow all origins for API access in dev/prod blueprint
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -34,6 +60,8 @@ app.get('/api/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/land', landRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Centralized Error Handling Middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

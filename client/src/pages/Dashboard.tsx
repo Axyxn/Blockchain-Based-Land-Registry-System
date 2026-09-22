@@ -10,52 +10,73 @@ const MOCK_LAND_RECORDS: LandRecord[] = [
   {
     id: 'b10a23c4-1111-4444-8888-000000000001',
     onchain_id: 1,
-    cadastral_id: 'CAD-10928',
-    title: 'Beverly Hills Commercial Plot A',
-    description: 'Prime commercial zoned real estate parcel with clear cadastral boundary mapping.',
-    state: 'California',
-    district: 'Los Angeles',
-    city: 'Los Angeles',
+    cadastral_id: 'MH-MUM-SRV-4092',
+    title: 'BKC Commercial Plot 4B',
+    description: 'Prime commercial land title in Bandra Kurla Complex with 7/12 extract verification.',
+    state: 'Maharashtra',
+    district: 'Mumbai Suburban',
+    city: 'Mumbai',
+    pincode: '400051',
     area_sqft: 8500,
     price_eth: 3.5,
     owner_address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     document_hash: '0xa4e8f9021b332c129d102e9fa189c4d9a112233445566778899aabbccddeeff0',
-    document_url: 'https://storage.placeholder.com/land-documents/CAD-10928.pdf',
+    document_url: 'https://storage.placeholder.com/land-documents/MH-MUM-SRV-4092.pdf',
     status: 'pending_verification',
     created_at: new Date().toISOString()
   },
   {
     id: 'b10a23c4-1111-4444-8888-000000000002',
     onchain_id: 2,
-    cadastral_id: 'CAD-55412',
-    title: 'Silicon Valley Innovation Hub Plot',
-    description: 'High-density tech park land title verified by San Jose District Land Registry.',
-    state: 'California',
-    district: 'Santa Clara',
-    city: 'San Jose',
+    cadastral_id: 'KA-BLR-KHS-8821',
+    title: 'Whitefield Cyber Tech Park Parcel',
+    description: 'IT Zoned real estate parcel verified by Bengaluru Urban District Registrar.',
+    state: 'Karnataka',
+    district: 'Bengaluru Urban',
+    city: 'Bengaluru',
+    pincode: '560066',
     area_sqft: 12000,
     price_eth: 5.8,
-    owner_address: '0x3C44CdD465734561e52b2b2309111304701cd994',
+    owner_address: '0x3C44CdDDBD6a900fa2b585dd299e03d12FA4293E',
     document_hash: '0xf5e7d6c5b4a39281701928374650192837465019283746501928374650192837',
-    document_url: 'https://storage.placeholder.com/land-documents/CAD-55412.pdf',
+    document_url: 'https://storage.placeholder.com/land-documents/KA-BLR-KHS-8821.pdf',
     status: 'listed_for_sale',
     created_at: new Date().toISOString()
   },
   {
     id: 'b10a23c4-1111-4444-8888-000000000003',
     onchain_id: 3,
-    cadastral_id: 'CAD-88192',
-    title: 'Manhattan Waterfront Parcel 4',
-    description: 'Luxury residential parcel overlooking Hudson River with verified ownership history.',
-    state: 'New York',
-    district: 'New York County',
-    city: 'New York',
+    cadastral_id: 'DL-NDL-CT-1092',
+    title: 'Lutyens Sector 4 Prime Parcel',
+    description: 'High-value central New Delhi title deed registered under Dept of Revenue.',
+    state: 'Delhi',
+    district: 'New Delhi',
+    city: 'New Delhi',
+    pincode: '110001',
     area_sqft: 4500,
     price_eth: 8.2,
-    owner_address: '0x90F79bf6EB2c4f80B08002252A0e2B39589d9703',
+    owner_address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     document_hash: '0x11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff',
-    document_url: 'https://storage.placeholder.com/land-documents/CAD-88192.pdf',
+    document_url: 'https://storage.placeholder.com/land-documents/DL-NDL-CT-1092.pdf',
     status: 'verified',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'b10a23c4-1111-4444-8888-000000000004',
+    onchain_id: 4,
+    cadastral_id: 'TS-HYD-SRV-3390',
+    title: 'Gachibowli Financial District Land',
+    description: 'Clear boundary title in Hyderabad tech Corridor verified by TS-Registration portal.',
+    state: 'Telangana',
+    district: 'Hyderabad',
+    city: 'Hyderabad',
+    pincode: '500032',
+    area_sqft: 6200,
+    price_eth: 2.9,
+    owner_address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+    document_hash: '0x99887766554433221100aabbccddeeff99887766554433221100aabbccddeeff',
+    document_url: 'https://storage.placeholder.com/land-documents/TS-HYD-SRV-3390.pdf',
+    status: 'listed_for_sale',
     created_at: new Date().toISOString()
   }
 ];
@@ -100,10 +121,13 @@ export const Dashboard: React.FC = () => {
         alert(`Parcel #${record.onchain_id} verified on-chain!`);
       }
 
-      // Sync off-chain status via API
+      const token = localStorage.getItem('token');
       await fetch('/api/land/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           onchainId: record.onchain_id || 1,
           cadastralId: record.cadastral_id,
@@ -229,7 +253,7 @@ export const Dashboard: React.FC = () => {
           <div className="bg-background/50 p-4 rounded-xl border border-border">
             <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block">Marketplace Valuation</span>
             <span className="font-heading text-2xl font-extrabold text-primary mt-1 block">
-              ${(records.reduce((acc, r) => acc + r.price_eth, 0) * 3123).toLocaleString()} <span className="text-sm font-medium text-muted-foreground">({records.reduce((acc, r) => acc + r.price_eth, 0).toFixed(1)} ETH)</span>
+              ₹{((records.reduce((acc, r) => acc + r.price_eth, 0) * 25000000) / 10000000).toFixed(2)} Cr <span className="text-sm font-medium text-muted-foreground">({records.reduce((acc, r) => acc + r.price_eth, 0).toFixed(1)} ETH)</span>
             </span>
           </div>
         </div>

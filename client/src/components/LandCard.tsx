@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Maximize2, ShieldCheck, Tag, ExternalLink, Hash, Clock, FileCheck } from 'lucide-react';
+import { MapPin, Maximize2, ShieldCheck, Tag, ExternalLink, Hash, Clock, FileCheck, AlertTriangle } from 'lucide-react';
 
 export interface LandRecord {
   id: string;
@@ -20,7 +20,7 @@ export interface LandRecord {
   owner_address: string;
   document_url?: string;
   document_hash: string;
-  status: 'pending_verification' | 'verified' | 'listed_for_sale' | 'transfer_pending' | 'transferred' | 'rejected';
+  status: 'pending_verification' | 'verified' | 'listed_for_sale' | 'transfer_pending' | 'transferred' | 'rejected' | 'disputed';
   created_at: string;
 }
 
@@ -38,6 +38,7 @@ export const LandCard: React.FC<LandCardProps> = ({ record, onActionClick, actio
     transfer_pending: { label: 'Transfer Escrow Pending', style: 'bg-accent/10 text-accent border-accent/30', icon: Clock },
     transferred: { label: 'Transferred', style: 'bg-primary/10 text-primary border-primary/30', icon: FileCheck },
     rejected: { label: 'Rejected', style: 'bg-destructive/10 text-destructive border-destructive/30', icon: Clock },
+    disputed: { label: 'Title Disputed', style: 'bg-destructive/10 text-destructive border-destructive/30', icon: AlertTriangle },
   };
 
   const badge = statusBadges[record.status] || statusBadges.pending_verification;

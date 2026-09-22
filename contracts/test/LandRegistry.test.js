@@ -77,4 +77,38 @@ describe("LandRegistry Smart Contract", function () {
     const finalSellerBalance = await ethers.provider.getBalance(seller.address);
     expect(finalSellerBalance - initialSellerBalance).to.equal(price);
   });
+
+  it("Should allow authorized caller to flag dispute and block listing/transfer", async function () {
+    const docHash = ethers.keccak256(ethers.toUtf8Bytes("Deed Document Content"));
+    const price = ethers.parseEther("1.0");
+
+    await landRegistry.connect(seller).registerLand("CAD-9999", "FL", 2000, price, docHash);
+    await landRegistry.connect(registrar).verifyLand(1);
+    await landRegistry.connect(seller).listLandForSale(1, price);
+
+    // Flag dispute
+    await landRegistry.connect(seller).flagDispute(1, "Boundary dispute raised by neighbor");
+
+    let parcel = await landRegistry.getLandParcel(1);
+    expect(parcel.isDisputed).to.be.true;
+    expect(parcel.isForSale).to.be.false;
+
+    // Listing or transfer should revert while disputed
+    await expect(landRegistry.connect(seller).listLandForSale(1, price))
+      .to.be.revertedWith("LandRegistry: Parcel is currently disputed");
+
+    await expect(landRegistry.connect(buyer).initiateTransfer(1, { value: price }))
+      .to.be.revertedWith("LandRegistry: Parcel is currently disputed");
+
+    // Registrar resolves dispute
+    await landRegistry.connect(registrar).resolveDispute(1);
+
+    parcel = await landRegistry.getLandParcel(1);
+    expect(parcel.isDisputed).to.be.false;
+
+    // Now seller can list again
+    await landRegistry.connect(seller).listLandForSale(1, price);
+    parcel = await landRegistry.getLandParcel(1);
+    expect(parcel.isForSale).to.be.true;
+  });
 });

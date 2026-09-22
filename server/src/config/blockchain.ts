@@ -5,7 +5,7 @@ dotenv.config();
 
 export const LAND_REGISTRY_ABI = [
   "function totalParcelsCount() view returns (uint256)",
-  "function parcels(uint256) view returns (uint256 id, string cadastralId, string location, uint256 areaInSqFt, uint256 price, address currentOwner, bool isVerified, bool isForSale, bytes32 documentHash)",
+  "function parcels(uint256) view returns (uint256 id, string cadastralId, string location, uint256 areaInSqFt, uint256 price, address currentOwner, bool isVerified, bool isForSale, bool isDisputed, bytes32 documentHash)",
   "function transferRequests(uint256) view returns (address buyer, uint256 offeredPrice, uint8 status, uint256 createdAt)",
   "function isRegistrar(address) view returns (bool)",
   "function owner() view returns (address)",
@@ -18,7 +18,7 @@ export const LAND_REGISTRY_ABI = [
   "function approveTransferByRegistrar(uint256 parcelId)",
   "function rejectTransfer(uint256 parcelId, string reason)",
   "function getParcelsByOwner(address ownerAddr) view returns (uint256[])",
-  "function getLandParcel(uint256 parcelId) view returns (tuple(uint256 id, string cadastralId, string location, uint256 areaInSqFt, uint256 price, address currentOwner, bool isVerified, bool isForSale, bytes32 documentHash))",
+  "function getLandParcel(uint256 parcelId) view returns (tuple(uint256 id, string cadastralId, string location, uint256 areaInSqFt, uint256 price, address currentOwner, bool isVerified, bool isForSale, bool isDisputed, bytes32 documentHash))",
   "event LandRegistered(uint256 indexed parcelId, address indexed owner, string cadastralId, string location, uint256 areaInSqFt, uint256 price, bytes32 documentHash)",
   "event LandVerified(uint256 indexed parcelId, address indexed registrar)",
   "event LandListed(uint256 indexed parcelId, uint256 price)",
@@ -26,7 +26,9 @@ export const LAND_REGISTRY_ABI = [
   "event TransferInitiated(uint256 indexed parcelId, address indexed buyer, uint256 offerAmount)",
   "event TransferApprovedByOwner(uint256 indexed parcelId, address indexed buyer)",
   "event LandTransferred(uint256 indexed parcelId, address indexed previousOwner, address indexed newOwner, uint256 price)",
-  "event TransferRejected(uint256 indexed parcelId, address indexed buyer, string reason)"
+  "event TransferRejected(uint256 indexed parcelId, address indexed buyer, string reason)",
+  "event DisputeFlagged(uint256 indexed parcelId, address indexed reporter, string reason)",
+  "event DisputeResolved(uint256 indexed parcelId, address indexed registrar)"
 ];
 
 const rpcUrl = process.env.RPC_URL || "https://rpc.sepolia.org";

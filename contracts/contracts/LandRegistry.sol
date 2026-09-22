@@ -22,7 +22,15 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
         address currentOwner;
         bool isVerified;
         bool isForSale;
+        bool isDisputed;
         bytes32 documentHash;
+    }
+
+    struct Dispute {
+        address reporter;
+        string reason;
+        uint256 timestamp;
+        bool isResolved;
     }
 
     struct TransferRequest {
@@ -37,6 +45,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     mapping(uint256 => LandParcel) public parcels;
     mapping(address => uint256[]) private _ownerParcels;
     mapping(uint256 => TransferRequest) public transferRequests;
+    mapping(uint256 => Dispute) public disputes;
     mapping(address => bool) public isRegistrar;
 
     // Events
@@ -64,6 +73,8 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     );
     event TransferRejected(uint256 indexed parcelId, address indexed buyer, string reason);
     event EscrowRefunded(uint256 indexed parcelId, address indexed buyer, uint256 amount);
+    event DisputeFlagged(uint256 indexed parcelId, address indexed reporter, string reason);
+    event DisputeResolved(uint256 indexed parcelId, address indexed registrar);
 
     // Modifiers
     modifier onlyRegistrar() {
@@ -78,6 +89,11 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
 
     modifier parcelExists(uint256 parcelId) {
         require(parcelId > 0 && parcelId <= totalParcelsCount, "LandRegistry: Parcel does not exist");
+        _;
+    }
+
+    modifier parcelNotDisputed(uint256 parcelId) {
+        require(!parcels[parcelId].isDisputed, "LandRegistry: Parcel is currently disputed");
         _;
     }
 
@@ -135,6 +151,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
             currentOwner: msg.sender,
             isVerified: false,
             isForSale: false,
+            isDisputed: false,
             documentHash: documentHash
         });
 
@@ -158,7 +175,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev List verified parcel for sale
      */
-    function listLandForSale(uint256 parcelId, uint256 price) external onlyLandOwner(parcelId) parcelExists(parcelId) whenNotPaused {
+    function listLandForSale(uint256 parcelId, uint256 price) external onlyLandOwner(parcelId) parcelExists(parcelId) parcelNotDisputed(parcelId) whenNotPaused {
         LandParcel storage parcel = parcels[parcelId];
         require(parcel.isVerified, "LandRegistry: Land must be verified by registrar before listing");
         require(price > 0, "LandRegistry: Price must be > 0");
@@ -183,7 +200,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Buyer initiates title purchase by locking funds into contract escrow
      */
-    function initiateTransfer(uint256 parcelId) external payable parcelExists(parcelId) nonReentrant whenNotPaused {
+    function initiateTransfer(uint256 parcelId) external payable parcelExists(parcelId) parcelNotDisputed(parcelId) nonReentrant whenNotPaused {
         LandParcel storage parcel = parcels[parcelId];
         require(parcel.isVerified, "LandRegistry: Parcel is not verified");
         require(parcel.isForSale, "LandRegistry: Parcel is not for sale");
@@ -206,7 +223,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Seller approves buyer's offer
      */
-    function approveTransferByOwner(uint256 parcelId) external onlyLandOwner(parcelId) parcelExists(parcelId) whenNotPaused {
+    function approveTransferByOwner(uint256 parcelId) external onlyLandOwner(parcelId) parcelExists(parcelId) parcelNotDisputed(parcelId) whenNotPaused {
         TransferRequest storage req = transferRequests[parcelId];
         require(req.status == TransferStatus.Pending, "LandRegistry: No pending request");
 
@@ -217,7 +234,7 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Government Registrar performs final approval, transferring title & executing payment to seller
      */
-    function approveTransferByRegistrar(uint256 parcelId) external onlyRegistrar parcelExists(parcelId) nonReentrant whenNotPaused {
+    function approveTransferByRegistrar(uint256 parcelId) external onlyRegistrar parcelExists(parcelId) parcelNotDisputed(parcelId) nonReentrant whenNotPaused {
         TransferRequest storage req = transferRequests[parcelId];
         require(req.status == TransferStatus.ApprovedByOwner, "LandRegistry: Owner must approve first");
 
@@ -240,6 +257,49 @@ contract LandRegistry is Ownable, ReentrancyGuard, Pausable {
         require(success, "LandRegistry: Payment to seller failed");
 
         emit LandTransferred(parcelId, previousOwner, newOwner, paymentAmount);
+    }
+
+    /**
+     * @dev Flag a dispute on a land parcel
+     */
+    function flagDispute(uint256 parcelId, string memory reason) external parcelExists(parcelId) whenNotPaused {
+        LandParcel storage parcel = parcels[parcelId];
+        require(!parcel.isDisputed, "LandRegistry: Parcel already disputed");
+        require(bytes(reason).length > 0, "LandRegistry: Reason required");
+
+        TransferRequest memory req = transferRequests[parcelId];
+        require(
+            msg.sender == parcel.currentOwner ||
+            msg.sender == req.buyer ||
+            isRegistrar[msg.sender] ||
+            msg.sender == owner(),
+            "LandRegistry: Unauthorized to flag dispute"
+        );
+
+        parcel.isDisputed = true;
+        parcel.isForSale = false;
+
+        disputes[parcelId] = Dispute({
+            reporter: msg.sender,
+            reason: reason,
+            timestamp: block.timestamp,
+            isResolved: false
+        });
+
+        emit DisputeFlagged(parcelId, msg.sender, reason);
+    }
+
+    /**
+     * @dev Resolve a dispute on a land parcel
+     */
+    function resolveDispute(uint256 parcelId) external onlyRegistrar parcelExists(parcelId) whenNotPaused {
+        LandParcel storage parcel = parcels[parcelId];
+        require(parcel.isDisputed, "LandRegistry: Parcel is not disputed");
+
+        parcel.isDisputed = false;
+        disputes[parcelId].isResolved = true;
+
+        emit DisputeResolved(parcelId, msg.sender);
     }
 
     /**
